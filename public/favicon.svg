@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- 背景圆形 -->
+  <circle cx="32" cy="32" r="32" fill="#1677ff"/>
+  
+  <!-- API 图标 - 三个互联的节点 -->
+  <g stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+    <!-- 左节点 -->
+    <circle cx="18" cy="32" r="5" fill="#1677ff"/>
+    
+    <!-- 右上节点 -->
+    <circle cx="46" cy="22" r="5" fill="#1677ff"/>
+    
+    <!-- 右下节点 -->
+    <circle cx="46" cy="42" r="5" fill="#1677ff"/>
+    
+    <!-- 连接线 -->
+    <line x1="23" y1="32" x2="41" y2="24"/>
+    <line x1="23" y1="32" x2="41" y2="40"/>
+    <line x1="46" y1="27" x2="46" y2="37"/>
+  </g>
+  
+  <!-- 中心节点 -->
+  <circle cx="18" cy="32" r="5" fill="#ffffff"/>
+  <circle cx="46" cy="22" r="5" fill="#ffffff"/>
+  <circle cx="46" cy="42" r="5" fill="#ffffff"/>
+</svg>
+

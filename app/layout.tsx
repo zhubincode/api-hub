@@ -3,8 +3,17 @@ import { ReactNode } from "react";
 import AppShell from "../components/AppShell";
 
 export const metadata = {
-  title: "公司公共接口服务平台",
-  description: "统一展示与测试公司内部公共 API",
+  title: "API Hub - 公共接口服务平台",
+  description: "统一展示与测试公司内部公共 API，实时监控接口健康状态",
+  keywords: ["API", "接口测试", "监控", "内部工具"],
+  authors: [{ name: "Internal Dev Team" }],
+  icons: {
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/favicon.svg", type: "image/svg+xml" },
+    ],
+    apple: "/apple-touch-icon.png",
+  },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
@@ -16,4 +25,3 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     </html>
   );
 }
-
