@@ -31,7 +31,6 @@ COPY --from=deps /app/node_modules ./node_modules
 # 复制配置与源码
 COPY next.config.js postcss.config.js tsconfig.json ./
 COPY tailwind.config.ts ./
-COPY next-env.d.ts ./
 COPY app ./app
 COPY pages ./pages
 COPY components ./components
