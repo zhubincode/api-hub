@@ -9,10 +9,9 @@ export const metadata = {
   authors: [{ name: "Internal Dev Team" }],
   icons: {
     icon: [
-      { url: "/favicon.ico" },
+      { url: "/favicon.ico", sizes: "any" },
       { url: "/favicon.svg", type: "image/svg+xml" },
     ],
-    apple: "/apple-touch-icon.png",
   },
 };
 
