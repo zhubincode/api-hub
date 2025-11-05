@@ -1,14 +1,11 @@
 # 使用官方 Node.js 18 Alpine 镜像
 FROM node:18-alpine
 
-# 切换到国内镜像源（阿里云，可选）
-RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories || true
-
 # 设置工作目录
 WORKDIR /app
 
-# 安装必要的系统依赖（curl 用于健康检查）
-RUN apk add --no-cache libc6-compat curl
+# 安装必要的系统依赖
+RUN apk add --no-cache libc6-compat
 
 # 复制包管理文件
 COPY package.json package-lock.json* yarn.lock* ./
