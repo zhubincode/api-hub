@@ -34,6 +34,9 @@ WORKDIR /app
 # 从 deps 阶段复制依赖
 COPY --from=deps /app/node_modules ./node_modules
 
+# 复制 package.json（构建时需要）
+COPY package.json ./
+
 # 复制配置与源码
 COPY next.config.js postcss.config.js tsconfig.json ./
 COPY tailwind.config.ts ./
