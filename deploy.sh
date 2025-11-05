@@ -28,19 +28,12 @@ docker-compose down 2>/dev/null || true
 
 echo "🔨 构建镜像..."
 if [ "$FAST_DEPLOY" = true ]; then
+    echo "⚡ 使用缓存快速构建..."
     docker-compose build
 else
-    if [ -f "package.json" ] && { [ -f "yarn.lock" ] || [ -f "package-lock.json" ]; }; then
-        if [ ! -f ".docker-build-cache" ] || [ "package.json" -nt ".docker-build-cache" ] || [ "yarn.lock" -nt ".docker-build-cache" ] || [ "package-lock.json" -nt ".docker-build-cache" ]; then
-            echo "📦 依赖变化，重新构建（无缓存）..."
-            docker-compose build --no-cache
-            touch .docker-build-cache
-        else
-            docker-compose build
-        fi
-    else
-        docker-compose build
-    fi
+    # 总是使用缓存构建（Docker 会自动判断哪些层需要重建）
+    echo "📦 智能构建（利用 Docker 层缓存）..."
+    docker-compose build
 fi
 
 echo "🚀 启动服务..."

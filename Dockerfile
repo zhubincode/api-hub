@@ -4,11 +4,17 @@
 FROM node:18-alpine AS deps
 WORKDIR /app
 
+# 使用阿里云镜像源加速（中国大陆）
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
+
 # 安装必要的系统依赖
 RUN apk add --no-cache libc6-compat
 
 # 复制包管理文件
 COPY package.json package-lock.json* yarn.lock* ./
+
+# 配置 npm 使用淘宝镜像加速（中国大陆）
+RUN npm config set registry https://registry.npmmirror.com
 
 # 安装所有依赖（包含 devDependencies）
 RUN if [ -f package-lock.json ]; then \
@@ -52,6 +58,9 @@ RUN if [ -f yarn.lock ]; then \
 # ===========================
 FROM node:18-alpine AS runner
 WORKDIR /app
+
+# 使用阿里云镜像源加速（中国大陆）
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
 
 # 安装运行时依赖（添加 curl 用于健康检查）
 RUN apk add --no-cache libc6-compat curl
