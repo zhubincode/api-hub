@@ -4,8 +4,14 @@
 FROM node:18-alpine AS deps
 WORKDIR /app
 
-# 使用阿里云镜像源加速（中国大陆）
-RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
+# 使用阿里云镜像源加速（中国大陆），并保留官方源作为兜底，避免镜像临时不可用导致构建失败
+RUN cp /etc/apk/repositories /etc/apk/repositories.bak \
+    && printf '%s\n' \
+        'https://mirrors.aliyun.com/alpine/latest-stable/main' \
+        'https://mirrors.aliyun.com/alpine/latest-stable/community' \
+        'https://dl-cdn.alpinelinux.org/alpine/latest-stable/main' \
+        'https://dl-cdn.alpinelinux.org/alpine/latest-stable/community' \
+        > /etc/apk/repositories
 
 # 安装必要的系统依赖
 RUN apk add --no-cache libc6-compat
@@ -62,8 +68,14 @@ RUN if [ -f yarn.lock ]; then \
 FROM node:18-alpine AS runner
 WORKDIR /app
 
-# 使用阿里云镜像源加速（中国大陆）
-RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
+# 使用与依赖阶段一致的镜像配置，确保 curl 等运行时依赖正常安装
+RUN cp /etc/apk/repositories /etc/apk/repositories.bak \
+    && printf '%s\n' \
+        'https://mirrors.aliyun.com/alpine/latest-stable/main' \
+        'https://mirrors.aliyun.com/alpine/latest-stable/community' \
+        'https://dl-cdn.alpinelinux.org/alpine/latest-stable/main' \
+        'https://dl-cdn.alpinelinux.org/alpine/latest-stable/community' \
+        > /etc/apk/repositories
 
 # 安装运行时依赖（添加 curl 用于健康检查）
 RUN apk add --no-cache libc6-compat curl
