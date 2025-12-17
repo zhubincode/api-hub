@@ -9,6 +9,7 @@ import {
 } from "@ant-design/icons";
 import { getApiByKey } from "@services/apis";
 import TestPanel from "@components/TestPanel";
+import CorsProxyPanel from "@components/CorsProxyPanel";
 
 const { Title, Paragraph } = Typography;
 
@@ -77,7 +78,11 @@ export default function ApiDetailPage() {
       </Card>
 
       {/* 测试面板 */}
-      <TestPanel api={api} />
+      {api.key === "connectivity" ? (
+        <TestPanel api={api} />
+      ) : (
+        <CorsProxyPanel api={api} />
+      )}
     </div>
   );
 }
