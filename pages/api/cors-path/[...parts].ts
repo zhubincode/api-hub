@@ -20,6 +20,12 @@ const handler = async (
 
   const [encodedBase, ...restPath] = arr as string[];
 
+  if (!encodedBase) {
+    return res
+      .status(400)
+      .json({ message: "Missing encoded base in path" });
+  }
+
   let baseUrl: string;
   try {
     baseUrl = decodeURIComponent(encodedBase);
