@@ -1,6 +1,22 @@
 import "./globals.css";
 import { ReactNode } from "react";
+import { Orbitron, Share_Tech_Mono } from "next/font/google";
 import AppShell from "../components/AppShell";
+
+// Vaporwave 字体配置
+const orbitron = Orbitron({
+  subsets: ["latin"],
+  weight: ["400", "500", "700", "900"],
+  variable: "--font-orbitron",
+  display: "swap",
+});
+
+const shareTechMono = Share_Tech_Mono({
+  subsets: ["latin"],
+  weight: ["400"],
+  variable: "--font-share-tech",
+  display: "swap",
+});
 
 export const metadata = {
   title: "API Hub - 公共接口服务平台",
@@ -17,8 +33,12 @@ export const metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="zh-CN" suppressHydrationWarning>
-      <body>
+    <html
+      lang="zh-CN"
+      suppressHydrationWarning
+      className={`${orbitron.variable} ${shareTechMono.variable} dark`}
+    >
+      <body className="font-mono">
         <AppShell>{children}</AppShell>
       </body>
     </html>

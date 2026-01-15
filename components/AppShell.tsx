@@ -1,95 +1,73 @@
 "use client";
 
-import "antd/dist/reset.css";
 import { ReactNode } from "react";
 import Link from "next/link";
-import {
-  ConfigProvider,
-  theme as antdTheme,
-  Layout,
-  Typography,
-  Space,
-  Switch,
-} from "antd";
-import { ThemeProvider, useTheme } from "next-themes";
 import ErrorBoundary from "./ErrorBoundary";
+import Scanlines from "./effects/Scanlines";
+import FloatingSun from "./effects/FloatingSun";
+import EffectBoundary from "./effects/EffectBoundary";
 
-function HeaderRight() {
-  const { theme, setTheme } = useTheme();
-  const isDark = theme === "dark";
-  return (
-    <Space size="middle">
-      <span className="text-sm text-gray-600 dark:text-gray-400">
-        {isDark ? "🌙 深色" : "☀️ 浅色"}
-      </span>
-      <Switch
-        checked={isDark}
-        onChange={(checked) => setTheme(checked ? "dark" : "light")}
-        className="bg-gray-300"
-      />
-    </Space>
-  );
-}
-
+/**
+ * Vaporwave AppShell
+ *
+ * 应用外壳组件，提供统一的 Vaporwave 风格布局。
+ * 包含 Header、Footer 和全局视觉效果（扫描线、浮动太阳）。
+ */
 function ShellFrame({ children }: { children: ReactNode }) {
-  const { theme } = useTheme();
-  const isDark = theme === "dark";
-
   return (
-    <ConfigProvider
-      theme={{
-        algorithm: isDark
-          ? antdTheme.darkAlgorithm
-          : antdTheme.defaultAlgorithm,
-        token: { colorPrimary: "#1677ff", borderRadius: 6 },
-      }}
-    >
-      <Layout className="min-h-screen">
-        <Layout.Header className="!bg-white dark:!bg-neutral-900 border-b border-gray-200 dark:border-neutral-800 shadow-sm sticky top-0 z-50">
-          <div className="container flex items-center justify-between h-16">
-            <Typography.Title
-              level={4}
-              className="!mb-0 flex items-center gap-2"
-            >
-              <Link
-                href="/"
-                className="text-inherit no-underline hover:text-blue-500 transition-colors duration-200 flex items-center gap-2"
-              >
-                <span className="text-2xl">🚀</span>
-                <span>API Hub</span>
-              </Link>
-            </Typography.Title>
-            <HeaderRight />
+    <div className="min-h-screen flex flex-col bg-void text-chrome">
+      {/* 全局效果层 */}
+      <EffectBoundary>
+        <Scanlines />
+        <FloatingSun />
+      </EffectBoundary>
+
+      {/* Header - 终端窗口风格 */}
+      <header className="sticky top-0 z-40 border-b-2 border-neon-cyan bg-void-light/90 backdrop-blur-md shadow-neon-cyan">
+        <div className="container flex items-center justify-between h-16">
+          {/* Logo */}
+          <Link href="/" className="flex items-center gap-3 no-underline group">
+            <span className="text-3xl transition-transform duration-200 group-hover:scale-110">
+              🚀
+            </span>
+            <h1 className="text-2xl font-heading font-black uppercase tracking-wider text-neon-cyan drop-shadow-glow-cyan m-0">
+              API Hub
+            </h1>
+          </Link>
+
+          {/* Window Control Dots */}
+          <div className="flex gap-2">
+            <div className="h-3 w-3 rounded-full bg-neon-magenta shadow-neon-magenta" />
+            <div className="h-3 w-3 rounded-full bg-neon-cyan shadow-neon-cyan" />
+            <div className="h-3 w-3 rounded-full bg-neon-orange" />
           </div>
-        </Layout.Header>
-        <Layout.Content className="py-8 bg-gray-50 dark:bg-neutral-950">
-          <div className="container animate-fade-in">{children}</div>
-        </Layout.Content>
-        <Layout.Footer className="!bg-white dark:!bg-neutral-900 border-t border-gray-200 dark:border-neutral-800">
-          <div className="container text-center">
-            <div className="text-sm text-gray-600 dark:text-gray-400">
-              © {new Date().getFullYear()} Internal API Hub · 统一接口服务平台
-            </div>
-            <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-              Powered by Next.js + Ant Design + TailwindCSS
-            </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="flex-1 py-8 relative z-10">
+        <div className="container animate-fade-in">{children}</div>
+      </main>
+
+      {/* Footer */}
+      <footer className="border-t-2 border-neon-magenta bg-void-light/90 backdrop-blur-md py-6">
+        <div className="container text-center space-y-2">
+          <div className="font-mono text-sm text-chrome/80 uppercase tracking-wider">
+            © {new Date().getFullYear()} Internal API Hub · 统一接口服务平台
           </div>
-        </Layout.Footer>
-      </Layout>
-    </ConfigProvider>
+          <div className="font-mono text-xs text-chrome/50 uppercase tracking-widest">
+            &gt; Powered by Next.js + Vaporwave Design System
+          </div>
+        </div>
+      </footer>
+    </div>
   );
 }
 
 export default function AppShell({ children }: { children: ReactNode }) {
   return (
     <ErrorBoundary>
-      <ThemeProvider
-        attribute="class"
-        defaultTheme="light"
-        enableSystem={false}
-      >
-        <ShellFrame>{children}</ShellFrame>
-      </ThemeProvider>
+      <ShellFrame>{children}</ShellFrame>
     </ErrorBoundary>
   );
 }

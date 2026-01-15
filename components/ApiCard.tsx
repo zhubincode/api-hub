@@ -1,12 +1,16 @@
 "use client";
 
-import { Card, Button, Tag, Typography } from "antd";
-import { RightOutlined, ApiOutlined } from "@ant-design/icons";
-import StatusBadge from "./StatusBadge";
+import Card from "./vaporwave/Card";
+import Button from "./vaporwave/Button";
+import Badge from "./vaporwave/Badge";
+import StatusBadge from "./vaporwave/StatusBadge";
 import type { ApiDefinition } from "@services/types";
 
-const { Title, Paragraph } = Typography;
-
+/**
+ * ApiCard Component - Vaporwave 风格
+ *
+ * 展示单个 API 接口的卡片，使用 Vaporwave 设计系统组件。
+ */
 interface Props {
   api: ApiDefinition;
   onNavigate?: () => void;
@@ -14,47 +18,36 @@ interface Props {
 
 export default function ApiCard({ api, onNavigate }: Props) {
   return (
-    <Card
-      hoverable
-      className="h-full transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
-      styles={{
-        body: { padding: "20px" },
-      }}
-    >
+    <Card className="h-full">
       <div className="space-y-4">
         {/* 头部：图标 + 标题 */}
         <div className="flex items-start gap-3">
-          <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center">
-            <ApiOutlined className="text-xl text-blue-500" />
+          {/* API 图标 */}
+          <div className="flex-shrink-0 w-12 h-12 border-2 border-neon-cyan bg-neon-cyan/10 flex items-center justify-center transform rotate-45">
+            <span className="text-2xl transform -rotate-45">🔌</span>
           </div>
+
           <div className="flex-1 min-w-0">
-            <Title level={5} className="!mb-1 !leading-tight">
+            {/* API 名称 */}
+            <h3 className="font-heading font-semibold text-xl text-neon-cyan drop-shadow-glow-cyan mb-2 leading-tight">
               {api.name}
-            </Title>
-            <Tag color="blue" className="!text-xs !px-2 !py-0">
-              {api.method}
-            </Tag>
+            </h3>
+
+            {/* HTTP 方法徽章 */}
+            <Badge color="magenta">{api.method}</Badge>
           </div>
         </div>
 
         {/* 描述 */}
-        <Paragraph
-          className="!mb-0 text-gray-600 dark:text-gray-400 !text-sm line-clamp-3"
-          ellipsis={{ rows: 3 }}
-        >
+        <p className="font-mono text-chrome/70 text-sm leading-relaxed line-clamp-3">
           {api.description}
-        </Paragraph>
+        </p>
 
         {/* 底部：状态 + 操作按钮 */}
-        <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-neutral-800">
+        <div className="flex items-center justify-between pt-4 border-t-2 border-chrome-dark">
           <StatusBadge status="unknown" />
-          <Button
-            type="primary"
-            size="middle"
-            icon={<RightOutlined />}
-            onClick={onNavigate}
-          >
-            立即测试
+          <Button variant="primary" size="sm" onClick={onNavigate}>
+            测试 →
           </Button>
         </div>
       </div>

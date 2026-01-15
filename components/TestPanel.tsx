@@ -2,28 +2,6 @@
 
 import { useCallback, useMemo, useState, useEffect } from "react";
 import {
-  Card,
-  Form,
-  Input,
-  Button,
-  Space,
-  Select,
-  Typography,
-  Divider,
-  Empty,
-  Switch,
-  Collapse,
-  Statistic,
-  Row,
-  Col,
-  message,
-} from "antd";
-import {
-  DeleteOutlined,
-  DownloadOutlined,
-  ThunderboltOutlined,
-} from "@ant-design/icons";
-import {
   LineChart,
   Line,
   XAxis,
@@ -34,7 +12,10 @@ import {
 } from "recharts";
 import dayjs from "dayjs";
 import { pick } from "lodash-es";
-import StatusBadge from "./StatusBadge";
+import Card from "./vaporwave/Card";
+import Button from "./vaporwave/Button";
+import Input from "./vaporwave/Input";
+import StatusBadge from "./vaporwave/StatusBadge";
 import type { ApiDefinition, ApiStatus, TestResult } from "@services/types";
 import { testConnectivity } from "@services/tester";
 
@@ -51,10 +32,23 @@ type ConnectivityForm = {
 const STORAGE_PREFIX = "api-hub-history:";
 
 export default function TestPanel({ api }: { api: ApiDefinition }) {
-  const [form] = Form.useForm<ConnectivityForm>();
+  const [formData, setFormData] = useState<ConnectivityForm>({
+    url: "",
+    method: "HEAD",
+    timeout: 8000,
+    passthroughStatus: true,
+    headFallbackToGet: true,
+    sendBrowserHeaders: true,
+    insecureTLS: true,
+  });
   const [loading, setLoading] = useState(false);
   const [last, setLast] = useState<TestResult | null>(null);
   const [history, setHistory] = useState<TestResult[]>([]);
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [message, setMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
 
   const storageKey = useMemo(() => STORAGE_PREFIX + api.key, [api.key]);
 
@@ -75,33 +69,35 @@ export default function TestPanel({ api }: { api: ApiDefinition }) {
     }
   }, [history, storageKey]);
 
-  const onSubmit = useCallback(async (values: ConnectivityForm) => {
-    setLoading(true);
-    try {
-      const res = await testConnectivity({
-        url: values.url,
-        method: values.method,
-        timeout: values.timeout,
-        passthroughStatus: values.passthroughStatus,
-        headFallbackToGet: values.headFallbackToGet,
-        sendBrowserHeaders: values.sendBrowserHeaders,
-        insecureTLS: values.insecureTLS,
-      });
-      setLast(res);
-      setHistory((prev) => [res, ...prev].slice(0, 50));
-      message.success("检测完成");
-    } catch (error) {
-      message.error("检测失败，请重试");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const onSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!formData.url) {
+        setMessage({ type: "error", text: "请输入目标 URL" });
+        return;
+      }
+
+      setLoading(true);
+      setMessage(null);
+      try {
+        const res = await testConnectivity(formData);
+        setLast(res);
+        setHistory((prev) => [res, ...prev].slice(0, 50));
+        setMessage({ type: "success", text: "检测完成" });
+      } catch (error) {
+        setMessage({ type: "error", text: "检测失败，请重试" });
+      } finally {
+        setLoading(false);
+      }
+    },
+    [formData]
+  );
 
   const handleClearHistory = useCallback(() => {
     setHistory([]);
     setLast(null);
     localStorage.removeItem(storageKey);
-    message.success("已清除历史记录");
+    setMessage({ type: "success", text: "已清除历史记录" });
   }, [storageKey]);
 
   const handleExportData = useCallback(() => {
@@ -117,7 +113,7 @@ export default function TestPanel({ api }: { api: ApiDefinition }) {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-    message.success("数据已导出");
+    setMessage({ type: "success", text: "数据已导出" });
   }, [history, api.key]);
 
   const chartData = useMemo(
@@ -147,308 +143,336 @@ export default function TestPanel({ api }: { api: ApiDefinition }) {
 
   return (
     <div className="space-y-6">
+      {/* 消息提示 */}
+      {message && (
+        <div
+          className={`border-2 p-4 font-mono text-sm ${
+            message.type === "success"
+              ? "border-neon-cyan bg-neon-cyan/10 text-neon-cyan"
+              : "border-neon-magenta bg-neon-magenta/10 text-neon-magenta"
+          }`}
+        >
+          &gt; {message.text}
+        </div>
+      )}
+
       {/* 统计概览 */}
       {history.length > 0 && (
-        <Row gutter={16}>
-          <Col xs={12} sm={6}>
-            <Card size="small">
-              <Statistic title="测试次数" value={history.length} suffix="次" />
-            </Card>
-          </Col>
-          <Col xs={12} sm={6}>
-            <Card size="small">
-              <Statistic
-                title="成功率"
-                value={successRate}
-                suffix="%"
-                valueStyle={{
-                  color: successRate >= 80 ? "#3f8600" : "#cf1322",
-                }}
-              />
-            </Card>
-          </Col>
-          <Col xs={12} sm={6}>
-            <Card size="small">
-              <Statistic title="平均耗时" value={avgTimeCost} suffix="ms" />
-            </Card>
-          </Col>
-          <Col xs={12} sm={6}>
-            <Card size="small">
-              <Statistic
-                title="最新状态"
-                value={last?.status || "未知"}
-                valueStyle={{
-                  color:
-                    last?.status === "success"
-                      ? "#3f8600"
-                      : last?.status === "error"
-                      ? "#cf1322"
-                      : "#d48806",
-                }}
-              />
-            </Card>
-          </Col>
-        </Row>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <Card variant="terminal">
+            <div className="text-center">
+              <div className="text-4xl font-heading font-black text-neon-cyan drop-shadow-glow-cyan">
+                {history.length}
+              </div>
+              <div className="font-mono text-xs text-chrome mt-2 uppercase tracking-wider">
+                测试次数
+              </div>
+            </div>
+          </Card>
+          <Card variant="terminal">
+            <div className="text-center">
+              <div
+                className={`text-4xl font-heading font-black drop-shadow-glow-cyan ${
+                  successRate >= 80 ? "text-neon-cyan" : "text-neon-magenta"
+                }`}
+              >
+                {successRate}%
+              </div>
+              <div className="font-mono text-xs text-chrome mt-2 uppercase tracking-wider">
+                成功率
+              </div>
+            </div>
+          </Card>
+          <Card variant="terminal">
+            <div className="text-center">
+              <div className="text-4xl font-heading font-black text-neon-orange drop-shadow-glow-cyan">
+                {avgTimeCost}
+              </div>
+              <div className="font-mono text-xs text-chrome mt-2 uppercase tracking-wider">
+                平均耗时(ms)
+              </div>
+            </div>
+          </Card>
+          <Card variant="terminal">
+            <div className="text-center">
+              <div className="text-xl font-mono font-bold text-neon-cyan uppercase">
+                {last?.status || "未知"}
+              </div>
+              <div className="font-mono text-xs text-chrome mt-2 uppercase tracking-wider">
+                最新状态
+              </div>
+            </div>
+          </Card>
+        </div>
       )}
 
       {/* 参数输入 */}
-      <Card title="参数配置" className="shadow-sm">
-        <Form
-          form={form}
-          layout="vertical"
-          initialValues={{
-            method: "HEAD",
-            timeout: 8000,
-            passthroughStatus: true,
-            headFallbackToGet: true,
-            sendBrowserHeaders: true,
-            insecureTLS: true,
-          }}
-          onFinish={onSubmit}
-        >
-          <Form.Item
+      <Card variant="terminal" title="&gt; 参数配置">
+        <form onSubmit={onSubmit} className="space-y-6">
+          <Input
             label="目标 URL"
-            name="url"
-            rules={[{ required: true, message: "请输入目标 URL" }]}
-          >
-            <Input
-              size="large"
-              placeholder="http://internal-nginx-your-service/healthz"
-              allowClear
-            />
-          </Form.Item>
-
-          <Row gutter={16}>
-            <Col xs={24} sm={12}>
-              <Form.Item label="请求方法" name="method">
-                <Select
-                  size="large"
-                  options={[
-                    { value: "GET", label: "GET" },
-                    { value: "HEAD", label: "HEAD" },
-                  ]}
-                />
-              </Form.Item>
-            </Col>
-            <Col xs={24} sm={12}>
-              <Form.Item label="超时时间（ms）" name="timeout">
-                <Input size="large" type="number" min={1000} step={500} />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          {/* 高级选项折叠面板 */}
-          <Collapse
-            ghost
-            items={[
-              {
-                key: "1",
-                label: "高级选项",
-                children: (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Form.Item
-                      label="严格返回目标状态码"
-                      name="passthroughStatus"
-                      valuePropName="checked"
-                      tooltip="开启后，代理 API 将透传目标服务的 HTTP 状态码"
-                    >
-                      <Switch />
-                    </Form.Item>
-                    <Form.Item
-                      label="HEAD 不支持时用 GET 重试"
-                      name="headFallbackToGet"
-                      valuePropName="checked"
-                      tooltip="部分服务未实现 HEAD 方法时自动降级为 GET"
-                    >
-                      <Switch />
-                    </Form.Item>
-                    <Form.Item
-                      label="发送浏览器标准头部"
-                      name="sendBrowserHeaders"
-                      valuePropName="checked"
-                      tooltip="携带 User-Agent、Accept 等标准浏览器头部"
-                    >
-                      <Switch />
-                    </Form.Item>
-                    <Form.Item
-                      label="忽略 TLS 证书校验"
-                      name="insecureTLS"
-                      valuePropName="checked"
-                      tooltip="等价于 curl -k，用于测试自签名证书服务"
-                    >
-                      <Switch />
-                    </Form.Item>
-                  </div>
-                ),
-              },
-            ]}
+            placeholder="http://internal-nginx-your-service/healthz"
+            value={formData.url}
+            onChange={(e) => setFormData({ ...formData, url: e.target.value })}
+            required
           />
 
-          <Form.Item className="!mb-0 !mt-6">
-            <Space>
-              <Button
-                type="primary"
-                htmlType="submit"
-                loading={loading}
-                size="large"
-                icon={<ThunderboltOutlined />}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="block font-mono text-sm text-chrome uppercase tracking-wider">
+                请求方法
+              </label>
+              <select
+                className="w-full border-b-2 border-neon-magenta bg-black text-neon-cyan font-mono text-lg px-3 py-2 focus-visible:border-neon-cyan focus-visible:shadow-[0_0_15px_#00FFFF] focus-visible:outline-none transition-all duration-200"
+                value={formData.method}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    method: e.target.value as "GET" | "HEAD",
+                  })
+                }
               >
-                立即检测
-              </Button>
-              <Button size="large" onClick={() => form.resetFields()}>
-                重置表单
-              </Button>
-            </Space>
-          </Form.Item>
-        </Form>
+                <option value="GET">GET</option>
+                <option value="HEAD">HEAD</option>
+              </select>
+            </div>
+
+            <Input
+              label="超时时间 (ms)"
+              type="number"
+              value={formData.timeout}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  timeout: parseInt(e.target.value) || 8000,
+                })
+              }
+            />
+          </div>
+
+          {/* 高级选项 */}
+          <div className="border-t-2 border-chrome-dark pt-4">
+            <button
+              type="button"
+              onClick={() => setShowAdvanced(!showAdvanced)}
+              className="font-mono text-sm text-neon-cyan hover:text-neon-magenta uppercase tracking-wider transition-colors"
+            >
+              {showAdvanced ? "▼" : "▶"} 高级选项
+            </button>
+
+            {showAdvanced && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                {[
+                  { key: "passthroughStatus", label: "严格返回目标状态码" },
+                  {
+                    key: "headFallbackToGet",
+                    label: "HEAD 不支持时用 GET 重试",
+                  },
+                  { key: "sendBrowserHeaders", label: "发送浏览器标准头部" },
+                  { key: "insecureTLS", label: "忽略 TLS 证书校验" },
+                ].map((option) => (
+                  <label
+                    key={option.key}
+                    className="flex items-center gap-3 cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={
+                        formData[
+                          option.key as keyof ConnectivityForm
+                        ] as boolean
+                      }
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          [option.key]: e.target.checked,
+                        })
+                      }
+                      className="w-5 h-5 accent-neon-cyan"
+                    />
+                    <span className="font-mono text-sm text-chrome">
+                      {option.label}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="flex gap-4">
+            <Button
+              type="submit"
+              variant="primary"
+              size="lg"
+              disabled={loading}
+            >
+              {loading ? "检测中..." : "⚡ 立即检测"}
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="lg"
+              onClick={() =>
+                setFormData({
+                  url: "",
+                  method: "HEAD",
+                  timeout: 8000,
+                  passthroughStatus: true,
+                  headFallbackToGet: true,
+                  sendBrowserHeaders: true,
+                  insecureTLS: true,
+                })
+              }
+            >
+              重置
+            </Button>
+          </div>
+        </form>
       </Card>
 
       {/* 最新结果 */}
-      <Card
-        title="最新检测结果"
-        className="shadow-sm"
-        extra={
-          <StatusBadge status={(last?.status ?? "unknown") as ApiStatus} />
-        }
-      >
+      <Card variant="terminal" title="&gt; 最新检测结果">
         {last ? (
-          <div className="space-y-4">
-            <Typography.Text type="secondary" className="text-sm">
-              检测时间：{dayjs(last.timestamp).format("YYYY-MM-DD HH:mm:ss")}
-            </Typography.Text>
-            <Row gutter={[16, 16]}>
-              <Col span={6}>
-                <div className="text-center p-3 bg-gray-50 dark:bg-neutral-800 rounded">
-                  <div className="text-2xl font-bold text-blue-500">
-                    {last.httpStatus ?? "-"}
-                  </div>
-                  <div className="text-xs text-gray-500 mt-1">HTTP 状态</div>
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <span className="font-mono text-sm text-chrome">
+                {dayjs(last.timestamp).format("YYYY-MM-DD HH:mm:ss")}
+              </span>
+              <StatusBadge status={last.status as any} />
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="border-2 border-neon-cyan/30 bg-neon-cyan/5 p-4 text-center">
+                <div className="text-4xl font-heading font-black text-neon-cyan">
+                  {last.httpStatus ?? "-"}
                 </div>
-              </Col>
-              <Col span={6}>
-                <div className="text-center p-3 bg-gray-50 dark:bg-neutral-800 rounded">
-                  <div className="text-2xl font-bold text-green-500">
-                    {last.timeCost}
-                  </div>
-                  <div className="text-xs text-gray-500 mt-1">响应时间(ms)</div>
+                <div className="font-mono text-xs text-chrome mt-2 uppercase">
+                  HTTP 状态
                 </div>
-              </Col>
-              <Col span={6}>
-                <div className="text-center p-3 bg-gray-50 dark:bg-neutral-800 rounded">
-                  <div className="text-2xl font-bold">{last.status}</div>
-                  <div className="text-xs text-gray-500 mt-1">状态</div>
+              </div>
+              <div className="border-2 border-neon-magenta/30 bg-neon-magenta/5 p-4 text-center">
+                <div className="text-4xl font-heading font-black text-neon-magenta">
+                  {last.timeCost}
                 </div>
-              </Col>
-              <Col span={6}>
-                <div className="text-center p-3 bg-gray-50 dark:bg-neutral-800 rounded">
-                  <div className="text-sm font-medium truncate">
-                    {last.message || "OK"}
-                  </div>
-                  <div className="text-xs text-gray-500 mt-1">消息</div>
+                <div className="font-mono text-xs text-chrome mt-2 uppercase">
+                  响应时间(ms)
                 </div>
-              </Col>
-            </Row>
-            <Divider className="!my-4" />
-            <Collapse
-              ghost
-              items={[
-                {
-                  key: "1",
-                  label: "查看完整响应数据",
-                  children: (
-                    <pre className="max-h-80 overflow-auto rounded bg-neutral-50 dark:bg-neutral-800 p-4 text-xs">
-                      {JSON.stringify(
-                        pick(last, [
-                          "status",
-                          "httpStatus",
-                          "timeCost",
-                          "message",
-                          "data",
-                        ]),
-                        null,
-                        2
-                      )}
-                    </pre>
-                  ),
-                },
-              ]}
-            />
+              </div>
+              <div className="border-2 border-neon-orange/30 bg-neon-orange/5 p-4 text-center">
+                <div className="text-2xl font-mono font-bold text-neon-orange uppercase">
+                  {last.status}
+                </div>
+                <div className="font-mono text-xs text-chrome mt-2 uppercase">
+                  状态
+                </div>
+              </div>
+              <div className="border-2 border-chrome-dark bg-void-light/50 p-4 text-center">
+                <div className="text-sm font-mono text-chrome truncate">
+                  {last.message || "OK"}
+                </div>
+                <div className="font-mono text-xs text-chrome mt-2 uppercase">
+                  消息
+                </div>
+              </div>
+            </div>
+
+            <details className="border-t-2 border-chrome-dark pt-4">
+              <summary className="font-mono text-sm text-neon-cyan cursor-pointer hover:text-neon-magenta uppercase tracking-wider">
+                查看完整响应数据
+              </summary>
+              <pre className="mt-4 max-h-80 overflow-auto border-2 border-neon-magenta/30 bg-black p-4 text-xs font-mono text-neon-cyan">
+                {JSON.stringify(
+                  pick(last, [
+                    "status",
+                    "httpStatus",
+                    "timeCost",
+                    "message",
+                    "data",
+                  ]),
+                  null,
+                  2
+                )}
+              </pre>
+            </details>
           </div>
         ) : (
-          <Empty
-            description="暂无数据，请先进行检测"
-            image={Empty.PRESENTED_IMAGE_SIMPLE}
-          />
+          <div className="text-center py-12">
+            <div className="text-6xl mb-4">📊</div>
+            <p className="font-mono text-chrome uppercase tracking-wider">
+              &gt; 暂无数据，请先进行检测
+            </p>
+          </div>
         )}
       </Card>
 
       {/* 响应时间曲线 */}
-      <Card
-        title="响应时间趋势"
-        className="shadow-sm"
-        extra={
-          history.length > 0 && (
-            <Space>
-              <Button
-                size="small"
-                icon={<DownloadOutlined />}
-                onClick={handleExportData}
-              >
-                导出数据
+      <Card variant="terminal" title="&gt; 响应时间趋势">
+        {history.length ? (
+          <div className="space-y-4">
+            <div className="flex gap-4 justify-end">
+              <Button variant="outline" size="sm" onClick={handleExportData}>
+                💾 导出数据
               </Button>
               <Button
-                size="small"
-                danger
-                icon={<DeleteOutlined />}
+                variant="secondary"
+                size="sm"
                 onClick={handleClearHistory}
               >
-                清除历史
+                🗑️ 清除历史
               </Button>
-            </Space>
-          )
-        }
-      >
-        {history.length ? (
-          <div style={{ width: "100%", height: 300 }}>
-            <ResponsiveContainer>
-              <LineChart data={chartData}>
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  className="stroke-gray-200 dark:stroke-neutral-700"
-                />
-                <XAxis dataKey="label" tick={{ fontSize: 12 }} stroke="#888" />
-                <YAxis
-                  tick={{ fontSize: 12 }}
-                  stroke="#888"
-                  label={{
-                    value: "响应时间 (ms)",
-                    angle: -90,
-                    position: "insideLeft",
-                  }}
-                />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "rgba(255, 255, 255, 0.95)",
-                    border: "1px solid #ccc",
-                    borderRadius: 8,
-                  }}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="timeCost"
-                  stroke="#1677ff"
-                  strokeWidth={3}
-                  dot={{ r: 4, fill: "#1677ff" }}
-                  activeDot={{ r: 6 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
+            </div>
+            <div style={{ width: "100%", height: 300 }}>
+              <ResponsiveContainer>
+                <LineChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#2D1B4E" />
+                  <XAxis
+                    dataKey="label"
+                    tick={{ fontSize: 12, fill: "#E0E0E0" }}
+                    stroke="#E0E0E0"
+                  />
+                  <YAxis
+                    tick={{ fontSize: 12, fill: "#E0E0E0" }}
+                    stroke="#E0E0E0"
+                    label={{
+                      value: "响应时间 (ms)",
+                      angle: -90,
+                      position: "insideLeft",
+                      style: { fill: "#E0E0E0" },
+                    }}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "#1a103c",
+                      border: "2px solid #00FFFF",
+                      borderRadius: 0,
+                      color: "#E0E0E0",
+                      fontFamily: "monospace",
+                    }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="timeCost"
+                    stroke="#00FFFF"
+                    strokeWidth={3}
+                    dot={{
+                      r: 4,
+                      fill: "#FF00FF",
+                      stroke: "#00FFFF",
+                      strokeWidth: 2,
+                    }}
+                    activeDot={{ r: 6, fill: "#00FFFF" }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         ) : (
-          <Empty
-            description="暂无历史数据"
-            image={Empty.PRESENTED_IMAGE_SIMPLE}
-          />
+          <div className="text-center py-12">
+            <div className="text-6xl mb-4">📈</div>
+            <p className="font-mono text-chrome uppercase tracking-wider">
+              &gt; 暂无历史数据
+            </p>
+          </div>
         )}
       </Card>
     </div>

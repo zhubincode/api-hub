@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ==================== 全局样式 ==================== */
+/* ==================== Vaporwave 全局样式 ==================== */
 
 :root,
 html,
@@ -11,16 +11,61 @@ body {
 }
 
 body {
-  @apply bg-gray-50 text-gray-900 dark:bg-neutral-950 dark:text-gray-100;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    "Helvetica Neue", Arial, sans-serif;
+  @apply bg-void text-chrome font-mono;
+  font-family: var(--font-share-tech), monospace;
+}
+
+/* 标题使用 Orbitron 字体 */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-orbitron), sans-serif;
+  @apply font-bold;
 }
 
 .container {
   @apply max-w-7xl mx-auto px-4;
 }
 
-/* ==================== 页面过渡动画 ==================== */
+/* ==================== Vaporwave 表单元素样式 ==================== */
+
+/* Select 下拉框 */
+select {
+  @apply bg-black text-neon-cyan;
+}
+
+select option {
+  @apply bg-void text-chrome;
+  padding: 8px;
+}
+
+/* Textarea */
+textarea {
+  @apply bg-black text-neon-cyan;
+}
+
+/* Input */
+input[type="text"],
+input[type="number"],
+input[type="email"],
+input[type="password"],
+input[type="url"] {
+  @apply bg-black text-neon-cyan;
+}
+
+/* Checkbox */
+input[type="checkbox"] {
+  @apply bg-black border-2 border-neon-cyan;
+}
+
+input[type="checkbox"]:checked {
+  @apply bg-neon-cyan;
+}
+
+/* ==================== Vaporwave 动画 ==================== */
 
 @keyframes fadeIn {
   from {
@@ -86,7 +131,7 @@ body {
   overflow: hidden;
 }
 
-/* ==================== 滚动条样式 ==================== */
+/* ==================== Vaporwave 滚动条样式 ==================== */
 
 ::-webkit-scrollbar {
   width: 8px;
@@ -94,45 +139,21 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-gray-100 dark:bg-neutral-800;
+  @apply bg-void-light;
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-gray-300 dark:bg-neutral-600 rounded;
+  @apply bg-neon-magenta rounded-none;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-gray-400 dark:bg-neutral-500;
+  @apply bg-neon-cyan;
 }
 
-/* ==================== Ant Design 样式覆盖 ==================== */
+/* ==================== Vaporwave 渐变文本工具类 ==================== */
 
-/* 统一卡片阴影 */
-.ant-card {
-  @apply shadow-sm;
-}
-
-.ant-card:hover {
-  @apply shadow-md;
-  transition: box-shadow 0.3s ease;
-}
-
-/* 优化 Collapse 样式 */
-.ant-collapse-ghost
-  > .ant-collapse-item
-  > .ant-collapse-content
-  > .ant-collapse-content-box {
-  @apply px-0;
-}
-
-/* 优化 Breadcrumb 样式 */
-.ant-breadcrumb {
-  @apply text-sm;
-}
-
-/* 优化 Empty 组件 */
-.ant-empty-description {
-  @apply text-gray-500 dark:text-gray-400;
+.gradient-text {
+  @apply bg-gradient-to-r from-neon-orange via-neon-magenta to-neon-cyan bg-clip-text text-transparent;
 }
 
 /* ==================== 响应式优化 ==================== */
@@ -140,5 +161,17 @@ body {
 @media (max-width: 768px) {
   .container {
     @apply px-3;
+  }
+}
+
+/* ==================== 减少动画（可访问性） ==================== */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
